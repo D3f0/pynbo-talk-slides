@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Nahuel Defossé (@D3f0)">
+  <title>🐍 🐳 w/ Docker w/ Security in Mind</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="https://revealjs.com/css/reveal.css">
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style>
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="https://revealjs.com/css/theme/white.css" id="theme">
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'https://revealjs.com/css/print/pdf.css' : 'https://revealjs.com/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="https://revealjs.com/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">🐍 🐳 w/ Docker w/ Security in Mind</h1>
+  <p class="author">Nahuel Defossé (<span class="citation" data-cites="D3f0">@D3f0</span>)</p>
+  <p class="date">June 2019</p>
+</section>
+<section id="TOC">
+<ul>
+<li><a href="#/goals">Goals</a></li>
+<li><a href="#/virtualization-basics">Virtualization Basics</a></li>
+<li><a href="#/containers">Containers</a></li>
+<li><a href="#/image-creation">Image Creation</a></li>
+<li><a href="#/docker-projects">Docker Projects</a></li>
+</ul>
+</section>
+
+<section id="goals" class="slide level1">
+<h1>Goals</h1>
+<p>Be able to create a Python application with Docker, with a <em>reasonable security level by default</em>.</p>
+<p>Structure project for docker.</p>
+</section>
+<section class="slide level1">
+
+<h2 id="further-reading">Further reading</h2>
+<p>I wrote an more in-depth article at my company’s website: <a href="https://engineering.spideroak.com/single-dockerfile-across-environments/">https://engineering.spideroak.com/single-dockerfile-across-environments/</a></p>
+</section>
+<section id="virtualization-basics" class="slide level1">
+<h1>Virtualization Basics</h1>
+<ul>
+<li>Virtual Machines</li>
+<li>Hypervisors</li>
+<li>Operating System Level Virtualization/Isolation</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h2 id="virtual-machines">Virtual Machines</h2>
+<ul>
+<li>Hard Disk images take big space (GBs)</li>
+<li>Boot up times are in the order of minutes</li>
+<li>Allocate a fixed amount of RAM (can be GBs)</li>
+<li>Are not so easy to distribute
+<ul>
+<li>i.e.: ISOs are not virtual Machines</li>
+<li>Vagrant Boxes are not easy to distribute</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h3 id="vms-strengths">VMs Strengths</h3>
+<ul>
+<li>Can run any Operating System</li>
+<li>Provide good isolation</li>
+<li>Mature technology</li>
+<li>Widely available</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h2 id="hypervisor">Hypervisor</h2>
+<ul>
+<li>Software/Firmware/Hardware that creates/runs VMs.</li>
+<li>Abstract the real resources from the VM</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Classified as:
+<ul>
+<li>Native (Level 1)
+<ul>
+<li>Xen, Oracle VM Server, Hyper-V, VMWare ESX/ESXi</li>
+</ul></li>
+<li>Hosted (Level 2)
+<ul>
+<li>VMWare Workstation/Player, VMWare, Parallels, QEMU</li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Linux KVM and BSD bhyve fall between the L1 and L2
+<ul>
+<li>Implemented as kernel modules</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h2 id="os-virtualizationisolation">OS Virtualization/Isolation</h2>
+<ul>
+<li>LXC</li>
+<li>BSD Jails</li>
+<li>Solaris Zones</li>
+<li>Open Private Server (OpenVZ)</li>
+<li><strong>Docker</strong> containers</li>
+</ul>
+</section>
+<section id="containers" class="slide level1">
+<h1>Containers</h1>
+</section>
+<section class="slide level1">
+
+<p><img data-src="imgs/uo.png" /></p>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Have a small disk footprint</li>
+<li>Use less RAM than a real VM</li>
+<li>Only provide <em>one service</em> 🤔</li>
+<li>Can be started in seconds</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h2 id="docker">Docker</h2>
+</section>
+<section class="slide level1">
+
+<figure>
+<img data-src="imgs/namespaces.png" alt="Docker Interfaces w/ 🐧Kernel" /><figcaption>Docker Interfaces w/ 🐧Kernel</figcaption>
+</figure>
+</section>
+<section class="slide level1">
+
+<h3 id="running-an-image">Running an image</h3>
+<p>Running a well known web server docker image.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" title="1"><span class="ex">docker</span> run --name my_container nginx -p 80:80</a></code></pre></div>
+<p>… prduces:</p>
+<pre><code>Unable to find image &#39;nginx:latest&#39; locally
+latest: Pulling from library/nginx
+fc7181108d40: Pull complete
+c4277fc40ec2: Pull complete
+780053e98559: Pull complete
+Digest: sha256:bdbf36b7f1f77ffe7bd2a32e59235dff6ecf131e3b6b5b96061c652f30685f3a
+Status: Downloaded newer image for nginx:latest</code></pre>
+</section>
+<section class="slide level1">
+
+<p>Now we can browser <a href="http://localhost:80">http://localhost:80</a></p>
+</section>
+<section class="slide level1">
+
+<h2 id="what-just-happened">What just happened?</h2>
+<ul>
+<li>Docker pulled the image from the public registry <code>hub.docker.com</code></li>
+<li>A container was created with a random name</li>
+<li>That container was started</li>
+<li>The host machine port 80 was mapped to the container’s 80</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h3 id="inspecting-the-container">Inspecting the container</h3>
+<p>We’re root</p>
+<pre><code>$ docker exec my_container id
+uid=0(root) gid=0(root) groups=0(root)</code></pre>
+<p>Which processes are present?</p>
+<pre><code> docker exec my_container ps
+OCI runtime exec failed: exec failed: container_linux.go:344: starting container process caused &quot;exec: \&quot;ps\&quot;: executable file not found in $PATH&quot;: unknown`</code></pre>
+</section>
+<section class="slide level1">
+
+<p>This image does not include <strong>ps</strong>.</p>
+<p>It’s a good practice only include the minimal elements for you application to run.</p>
+<p>Less attack surface and smaller image sizes.</p>
+</section>
+<section class="slide level1">
+
+<h3 id="lets-check-python-image">Let’s check Python image</h3>
+<p><a href="https://hub.docker.com/_/python">https://hub.docker.com/_/python</a></p>
+</section>
+<section class="slide level1">
+
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" title="1"><span class="ex">docker</span> run --name my_py_img --tty --interactive ipython:3.7</a>
+<a class="sourceLine" id="cb5-2" title="2"></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="ex">Python</span> 3.7.2 (default, Feb  6 2019, 12:04:03)</a>
+<a class="sourceLine" id="cb5-4" title="4">[<span class="ex">GCC</span> 6.3.0 20170516] on linux</a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="ex">Type</span> <span class="st">&quot;help&quot;</span>, <span class="st">&quot;copyright&quot;</span>, <span class="st">&quot;credits&quot;</span> or <span class="st">&quot;license&quot;</span> for more information.</a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="op">&gt;&gt;&gt;</span> <span class="ex">import</span> os</a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="op">&gt;&gt;&gt;</span> <span class="ex">os.system</span>(<span class="st">&#39;ps&#39;</span>)</a>
+<a class="sourceLine" id="cb5-8" title="8">  <span class="ex">PID</span> TTY          TIME CMD</a>
+<a class="sourceLine" id="cb5-9" title="9">    <span class="ex">1</span> pts/0    00:00:00 python3</a>
+<a class="sourceLine" id="cb5-10" title="10">    <span class="ex">6</span> pts/0    00:00:00 sh</a>
+<a class="sourceLine" id="cb5-11" title="11">    <span class="ex">7</span> pts/0    00:00:00 ps</a>
+<a class="sourceLine" id="cb5-12" title="12"><span class="ex">0</span></a>
+<a class="sourceLine" id="cb5-13" title="13"><span class="op">&gt;&gt;&gt;</span></a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<h2 id="section">🤨</h2>
+<p>This image seems to have more things than <code>ps</code>.</p>
+<pre><code>$ docker images python:3.7
+REPOSITORY    TAG    IMAGE ID       CREATED        SIZE
+python        3.7    338b34a7555c   4 months ago   927MB</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" title="1">$ <span class="ex">docker</span> run --rm python:3.7 gcc</a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="ex">gcc</span>: fatal error: no input files</a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="ex">compilation</span> terminated.</a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<h2 id="section-1">🤨</h2>
+<h3 id="this-image-is-bing-enough-to-have-a-full-linux-distro">This image is bing enough to have a full Linux distro</h3>
+<p>Probably it’s not the best thing to ship ⛵️</p>
+</section>
+<section class="slide level1">
+
+<p>We need a way to reduce the size of our images, thus our containers.</p>
+<p>But first we need to understand how storage works in a container.</p>
+</section>
+<section class="slide level1">
+
+<h3 id="container-storage">Container Storage</h3>
+</section>
+<section class="slide level1">
+
+<h4 id="images">Images 📦</h4>
+<ul>
+<li><p>Docker <strong>images</strong> are the base file system that the container will see at runtime.</p></li>
+<li><p><strong>Images</strong> is composed of layers 🍰, and will be created from either a tar-file or building a Dockerfile.</p></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h4 id="layers">Layers 🍰</h4>
+<p><img data-src="imgs/layers.png" /></p>
+</section>
+<section class="slide level1">
+
+<h4 id="we-can-actually-look-at-layers">We can actually look at layers…</h4>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb8-1" title="1"><span class="ex">docker</span> history python:3.7 --no-trunc</a>
+<a class="sourceLine" id="cb8-2" title="2"></a>
+<a class="sourceLine" id="cb8-3" title="3"><span class="ex">IMAGE</span>               CREATED             CREATED BY                                      SIZE                COMMENT</a>
+<a class="sourceLine" id="cb8-4" title="4"><span class="ex">338b34a7555c</span>        4 months ago        /bin/sh -c <span class="co">#(nop)  CMD [&quot;python3&quot;]              0B</span></a>
+<a class="sourceLine" id="cb8-5" title="5"><span class="op">&lt;</span><span class="ex">missing</span><span class="op">&gt;</span>           4 months ago        /bin/sh -c set -ex<span class="kw">;</span>   <span class="fu">wget</span> -O get-pip.py <span class="st">&#39;ht…   6.04MB</span></a>
+<a class="sourceLine" id="cb8-6" title="6"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  ENV PYTHON_PIP_VERSION=19…   0B</span></a>
+<a class="sourceLine" id="cb8-7" title="7"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c cd /usr/local/bin  &amp;&amp; ln -s idle3…   32B</span></a>
+<a class="sourceLine" id="cb8-8" title="8"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c set -ex   &amp;&amp; wget -O python.tar.x…   70.3MB</span></a>
+<a class="sourceLine" id="cb8-9" title="9"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  ENV PYTHON_VERSION=3.7.2     0B</span></a>
+<a class="sourceLine" id="cb8-10" title="10"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  ENV GPG_KEY=0D96DF4D4110E…   0B</span></a>
+<a class="sourceLine" id="cb8-11" title="11"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c apt-get update &amp;&amp; apt-get install…   17MB</span></a>
+<a class="sourceLine" id="cb8-12" title="12"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  ENV LANG=C.UTF-8             0B</span></a>
+<a class="sourceLine" id="cb8-13" title="13"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  ENV PATH=/usr/local/bin:/…   0B</span></a>
+<a class="sourceLine" id="cb8-14" title="14"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c set -ex;  apt-get update;  apt-ge…   560MB</span></a>
+<a class="sourceLine" id="cb8-15" title="15"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c apt-get update &amp;&amp; apt-get install…   142MB</span></a>
+<a class="sourceLine" id="cb8-16" title="16"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c set -ex;  if ! command -v gpg &gt; /…   7.81MB</span></a>
+<a class="sourceLine" id="cb8-17" title="17"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c apt-get update &amp;&amp; apt-get install…   23.2MB</span></a>
+<a class="sourceLine" id="cb8-18" title="18"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop)  CMD [&quot;bash&quot;]                 0B</span></a>
+<a class="sourceLine" id="cb8-19" title="19"><span class="st">&lt;missing&gt;           4 months ago        /bin/sh -c #(nop) ADD file:4fec879fdca802d69…   101MB</span></a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<h3 id="container-storage-1">Container storage</h3>
+<ul>
+<li>When the process writes to the filesystem, a new layer is produced.</li>
+<li>It’s kept during the lifetime of the container.</li>
+<li>Changes are lost when the container is removed.</li>
+</ul>
+<p>The good news is that all containers share the image, and won’t take space, unless they write</p>
+</section>
+<section class="slide level1">
+
+<h4 id="volumes">Volumes</h4>
+<ul>
+<li>To overcome the problem of transient storage docker provides volumes.</li>
+<li>Types of volumes:
+<ul>
+<li><p><strong>un-named</strong> when we define the exact place where files are stored</p>
+<p><strong>Must be absolute 🌡</strong></p></li>
+<li><p><strong>named</strong> when we let the Docker Engine define where our files will go.</p></li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb9-1" title="1">$ <span class="ex">docker</span> run --rm -ti -v <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>:/code python:3.7 bash</a>
+<a class="sourceLine" id="cb9-2" title="2"><span class="ex">root@d2b4492f3aa8</span>:/# cd /code/</a>
+<a class="sourceLine" id="cb9-3" title="3"><span class="ex">root@d2b4492f3aa8</span>:/code# ls</a>
+<a class="sourceLine" id="cb9-4" title="4"><span class="ex">root@d2b4492f3aa8</span>:/code# touch main.py</a>
+<a class="sourceLine" id="cb9-5" title="5"><span class="ex">root@d2b4492f3aa8</span>:/code# exit</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb10-1" title="1">$ <span class="fu">ls</span> -ls</a>
+<a class="sourceLine" id="cb10-2" title="2"><span class="ex">total</span> 0</a>
+<a class="sourceLine" id="cb10-3" title="3"><span class="ex">0</span> -rw-r--r-- 1 root root 0 Jun 14 16:59 main.py</a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<p>Wait, weren’t we <strong><code>uid=0</code></strong>? 🔥</p>
+</section>
+<section class="slide level1">
+
+<h2 id="network">Network</h2>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Each container runs by default in the Docker bridge.</li>
+<li>Unless we connect them at creation time (<code>run</code> or <code>create</code>) with a network.</li>
+</ul>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb11-1" title="1"><span class="ex">docker</span> network ls</a>
+<a class="sourceLine" id="cb11-2" title="2"><span class="ex">NETWORK</span> ID          NAME                DRIVER              SCOPE</a>
+<a class="sourceLine" id="cb11-3" title="3"><span class="ex">84422e48e242</span>        bridge              bridge              local</a>
+<a class="sourceLine" id="cb11-4" title="4"><span class="ex">fbca96234ec6</span>        host                host                local</a>
+<a class="sourceLine" id="cb11-5" title="5"><span class="ex">f6effdb82553</span>        none                null                local</a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<figure>
+<img data-src="./imgs/dockr-net.png" alt="Basic Container Networking" /><figcaption>Basic Container Networking</figcaption>
+</figure>
+</section>
+<section id="image-creation" class="slide level1">
+<h1>Image Creation</h1>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>In order to create images we need to write a <code>Dockerfile</code></li>
+<li>Run <code>docker build -t &lt;tag&gt; context dir</code> (context dir is usually the current directory or <code>.</code>)</li>
+<li>If we tag images with repository URLS, then we’ll be able to push them.</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<pre><code>FROM python:3.7-slim
+ENV USER=user UID=1000
+
+LABEL maintainer=me@mycompany.com
+
+RUN groupadd -g ${UID} -r ${USER} \
+    &amp;&amp; useradd -u ${UID} -r -g ${USER} ${USER}
+COPY requirements.txt /setup/requirements.txt
+RUN pip install /setup/requirements.txt
+COPY . /code
+WORKDIR /code
+USER ${USER}
+VOLUME /some_storage
+EXPOSE 8000
+RUN python myapp.py</code></pre>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Use reputed images from Registry in the <strong>FROM</strong>
+<ul>
+<li>If not, check Dockerfile to be minimal
+<ul>
+<li>and be automated</li>
+<li>or at least official (run <code>docker search term</code>)</li>
+</ul></li>
+<li>Or purchase Docker EE whose registry</li>
+</ul></li>
+<li>Resist temptation to use <code>VOLUME</code> for the code (at least until we learn about compose 😅)</li>
+<li>Use small as possible images</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h4 id="building-binary-packages">Building binary packages 🔨</h4>
+<pre><code>FROM python:3.6-slim AS python-builder
+RUN pip install -U pip
+# Overwrite symlink contents
+COPY /requirements-bin.txt
+RUN mkdir /wheels
+RUN cd /wheels &amp;&amp; pip wheel -r /requirements-bin.txt
+
+# Final image
+FROM python:3.6-slim
+# ...
+RUN adduser --disabled-password --gecos &quot;&quot; ${USER} &amp;&amp; \
+    chown -R ${USER} /home/${USER}
+COPY --from=python-builder /wheels/dist/ /wheels
+RUN cd /wheels &amp;&amp; pip install *.whl
+</code></pre>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>Don’t use root for runtime, create a user.</li>
+<li>Separate layers that produce big and rare changes like <code>pip install</code> to the top. Help the caché invalidation.</li>
+<li>Install requirements as root
+<ul>
+<li>and then demote yourself to your <code>USER</code>.</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<ul>
+<li>If dynamic startup is needed, add an <code>ENTRYPOINT</code></li>
+<li>You can write it in Python if you want.</li>
+<li>This can make the <em>image</em> part <em>production rady™</em> and augment your image for development.</li>
+</ul>
+</section>
+<section id="docker-projects" class="slide level1">
+<h1>Docker Projects</h1>
+</section>
+<section class="slide level1">
+
+<ul>
+<li><p>Rarely our application just relies in Python, we probably need DBs, IoT brokers, authentication providers, etc.</p></li>
+<li><p>Some development tasks are hard to accomplish from the <code>docker run</code> itself.</p></li>
+<li><p>Docker compose allows us to define:</p>
+<ul>
+<li>services</li>
+<li>networks</li>
+<li>volumes</li>
+</ul></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<div class="sourceCode" id="cb14"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb14-1" title="1"><span class="fu">services:</span></a>
+<a class="sourceLine" id="cb14-2" title="2"></a>
+<a class="sourceLine" id="cb14-3" title="3">  <span class="fu">myapp:</span></a>
+<a class="sourceLine" id="cb14-4" title="4">    <span class="fu">build:</span><span class="at"> ./webapp</span></a>
+<a class="sourceLine" id="cb14-5" title="5">    <span class="fu">ports:</span></a>
+<a class="sourceLine" id="cb14-6" title="6">      <span class="kw">-</span> 8080:80</a>
+<a class="sourceLine" id="cb14-7" title="7">    <span class="fu">environment:</span></a>
+<a class="sourceLine" id="cb14-8" title="8">      <span class="fu">DB_HOST:</span><span class="at"> postgresql</span></a>
+<a class="sourceLine" id="cb14-9" title="9">    <span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb14-10" title="10">      <span class="kw">-</span> /webapp/code:/code</a>
+<a class="sourceLine" id="cb14-11" title="11">    <span class="fu">restart:</span><span class="at"> unless-stopped</span></a>
+<a class="sourceLine" id="cb14-12" title="12"></a>
+<a class="sourceLine" id="cb14-13" title="13">  <span class="fu">postgresql:</span></a>
+<a class="sourceLine" id="cb14-14" title="14">    <span class="fu">image:</span><span class="at"> postgresql:10</span></a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<p>To bring up our project like this</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb15-1" title="1">$ <span class="ex">docker-compose</span> up</a></code></pre></div>
+<p>Typical flags are <code>docker up --build -d</code> and eventually <code>docker-compose logs</code>.</p>
+</section>
+<section class="slide level1">
+
+<h4 id="runtime-augmentation">Runtime augmentation</h4>
+<ul>
+<li>Put development requirements in volumes:
+<ul>
+<li>Define <code>PYTHONPATH</code> in <code>docker-compose.yml</code>’s <code>environment</code></li>
+<li>We can take advantage of <code>/home/user/.local</code> and run <code>pip install --user</code>.</li>
+</ul></li>
+<li>Create an entrypoint and check different behaviors based on environment.</li>
+<li>You can defined a custom entrypoint in your compose file, so your image is always production ready.</li>
+</ul>
+</section>
+<section class="slide level1">
+
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb16-1" title="1"><span class="co">#!/bin/bash</span></a>
+<a class="sourceLine" id="cb16-2" title="2"><span class="kw">set</span> <span class="ex">-e</span></a>
+<a class="sourceLine" id="cb16-3" title="3"><span class="va">cmd=</span><span class="st">&quot;</span><span class="va">$@</span><span class="st">&quot;</span></a>
+<a class="sourceLine" id="cb16-4" title="4"></a>
+<a class="sourceLine" id="cb16-5" title="5"><span class="kw">if</span><span class="bu"> [</span> <span class="st">&quot;</span><span class="va">${ENV:dev}</span><span class="st">&quot;</span> <span class="ot">!=</span> <span class="st">&quot;prod&quot;</span><span class="bu"> ]</span>; <span class="kw">then</span></a>
+<a class="sourceLine" id="cb16-6" title="6">    <span class="co"># Custom environment setup</span></a>
+<a class="sourceLine" id="cb16-7" title="7">    <span class="kw">if</span><span class="bu"> [</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">${SKIP_SETUP}</span><span class="st">&quot;</span> <span class="ot">-a</span> <span class="ot">-d</span> <span class="st">&quot;/shared/</span><span class="va">${ENV}</span><span class="st">&quot;</span><span class="bu"> ]</span>; <span class="kw">then</span></a>
+<a class="sourceLine" id="cb16-8" title="8">        <span class="kw">for</span> <span class="ex">f</span> in /shared/<span class="va">${ENV}</span>/*<span class="kw">;</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb16-9" title="9">            <span class="kw">case</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span><span class="kw"> in</span></a>
+<a class="sourceLine" id="cb16-10" title="10">            *.sh<span class="kw">)</span>     <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$0</span><span class="st">: running </span><span class="va">$f</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">.</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span> <span class="kw">;;</span></a>
+<a class="sourceLine" id="cb16-11" title="11">            *.py<span class="kw">)</span>     <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$0</span><span class="st">: running </span><span class="va">$f</span><span class="st">&quot;</span><span class="kw">;</span> <span class="ex">python</span> <span class="st">&quot;</span><span class="va">$f</span><span class="st">&quot;</span><span class="kw">;</span> <span class="bu">echo</span> <span class="kw">;;</span></a>
+<a class="sourceLine" id="cb16-12" title="12">            <span class="ex">*</span>)        <span class="bu">echo</span> <span class="st">&quot;</span><span class="va">$0</span><span class="st">: ignoring </span><span class="va">$f</span><span class="st">&quot;</span> <span class="kw">;;</span></a>
+<a class="sourceLine" id="cb16-13" title="13">            <span class="kw">esac</span></a>
+<a class="sourceLine" id="cb16-14" title="14">            <span class="bu">echo</span> <span class="st">&quot;Finished </span><span class="va">${ENV}</span><span class="st"> setup. Running </span><span class="va">$cmd</span><span class="st">&quot;</span></a>
+<a class="sourceLine" id="cb16-15" title="15">        <span class="kw">done</span></a>
+<a class="sourceLine" id="cb16-16" title="16">    <span class="kw">fi</span></a>
+<a class="sourceLine" id="cb16-17" title="17"><span class="kw">fi</span></a>
+<a class="sourceLine" id="cb16-18" title="18"></a>
+<a class="sourceLine" id="cb16-19" title="19"><span class="co"># Django specific</span></a>
+<a class="sourceLine" id="cb16-20" title="20"><span class="kw">if</span><span class="bu"> [</span> <span class="ot">-z</span> <span class="st">&quot;</span><span class="va">${SKIP_COLLECTSTATIC}</span><span class="st">&quot;</span><span class="bu"> ]</span>; <span class="kw">then</span></a>
+<a class="sourceLine" id="cb16-21" title="21">    <span class="bu">echo</span> <span class="st">&quot;Running collect static&quot;</span></a>
+<a class="sourceLine" id="cb16-22" title="22">    <span class="ex">python</span> manage.py collectstatic --noinput</a>
+<a class="sourceLine" id="cb16-23" title="23"><span class="kw">fi</span></a>
+<a class="sourceLine" id="cb16-24" title="24"></a>
+<a class="sourceLine" id="cb16-25" title="25"><span class="bu">exec</span> <span class="va">$cmd</span></a></code></pre></div>
+<p>This is bash, but could easily be achieved with Python.</p>
+</section>
+<section class="slide level1">
+
+<h2 id="development-sidecars">Development sidecars</h2>
+<ul>
+<li><p>You can put a separate <code>docker-compose.yml</code> and and call compose like:</p>
+<pre><code>docker-compose.yml -f docker-compose.yml -f dev.yml</code></pre></li>
+</ul>
+</section>
+<section class="slide level1">
+
+<h4 id="dev.yml"><code>dev.yml</code></h4>
+<div class="sourceCode" id="cb18"><pre class="sourceCode yaml"><code class="sourceCode yaml"><a class="sourceLine" id="cb18-1" title="1"><span class="fu">version:</span><span class="at"> </span><span class="st">&#39;3.5&#39;</span></a>
+<a class="sourceLine" id="cb18-2" title="2"><span class="fu">services:</span></a>
+<a class="sourceLine" id="cb18-3" title="3">  <span class="fu">jupyter:</span></a>
+<a class="sourceLine" id="cb18-4" title="4">    <span class="fu">image:</span><span class="at"> my_other_image</span></a>
+<a class="sourceLine" id="cb18-5" title="5">    <span class="fu">user:</span><span class="at"> root  </span><span class="co"># 😱</span></a>
+<a class="sourceLine" id="cb18-6" title="6">    <span class="fu">ports:</span></a>
+<a class="sourceLine" id="cb18-7" title="7">      <span class="kw">-</span> 8889:8888</a>
+<a class="sourceLine" id="cb18-8" title="8">    <span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb18-9" title="9">      <span class="kw">-</span> .:/code</a>
+<a class="sourceLine" id="cb18-10" title="10">      <span class="kw">-</span> local_cache:/root/.local</a>
+<a class="sourceLine" id="cb18-11" title="11">    <span class="fu">working_dir:</span><span class="at"> /code</span></a>
+<a class="sourceLine" id="cb18-12" title="12">    <span class="fu">command:</span><span class="at"> python /code/dev_entrypoint.py</span></a>
+<a class="sourceLine" id="cb18-13" title="13">    <span class="fu">labels:</span></a>
+<a class="sourceLine" id="cb18-14" title="14">      <span class="kw">-</span> <span class="st">&quot;not.for.prod&quot;</span></a>
+<a class="sourceLine" id="cb18-15" title="15">      <span class="kw">-</span> <span class="st">&quot;comment=🇰🇪&quot;</span></a>
+<a class="sourceLine" id="cb18-16" title="16"><span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb18-17" title="17">  <span class="fu">local_cache:</span></a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<h4 id="a-sketchy-entrypoint">A sketchy 🐍 entrypoint</h4>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb19-1" title="1"><span class="co">#!/usr/bin/env python</span></a>
+<a class="sourceLine" id="cb19-2" title="2"><span class="im">import</span> sys</a>
+<a class="sourceLine" id="cb19-3" title="3"><span class="im">import</span> os</a>
+<a class="sourceLine" id="cb19-4" title="4"><span class="im">import</span> subprocess</a>
+<a class="sourceLine" id="cb19-5" title="5"><span class="im">import</span> shlex</a>
+<a class="sourceLine" id="cb19-6" title="6"><span class="im">from</span> pathlib <span class="im">import</span> Path</a>
+<a class="sourceLine" id="cb19-7" title="7"></a>
+<a class="sourceLine" id="cb19-8" title="8"></a>
+<a class="sourceLine" id="cb19-9" title="9">CMD <span class="op">=</span> sys.argv[<span class="dv">1</span>:]</a>
+<a class="sourceLine" id="cb19-10" title="10"></a>
+<a class="sourceLine" id="cb19-11" title="11"><span class="cf">if</span> <span class="kw">not</span> CMD:</a>
+<a class="sourceLine" id="cb19-12" title="12">    CMD <span class="op">=</span> shlex.split(</a>
+<a class="sourceLine" id="cb19-13" title="13">        <span class="st">&quot;jupyter lab --ip=&#39;0.0.0.0&#39; --port=8888 --no-browser --notebook-dir=/code &quot;</span></a>
+<a class="sourceLine" id="cb19-14" title="14">        <span class="st">&quot;--allow-root --NotebookApp.token=&#39;&#39; --NotebookApp.allow_remote_access=True&quot;</span></a>
+<a class="sourceLine" id="cb19-15" title="15">    )</a>
+<a class="sourceLine" id="cb19-16" title="16"></a>
+<a class="sourceLine" id="cb19-17" title="17"></a>
+<a class="sourceLine" id="cb19-18" title="18"><span class="kw">def</span> run(command, can_fail<span class="op">=</span><span class="va">False</span>):</a>
+<a class="sourceLine" id="cb19-19" title="19">    <span class="cf">try</span>:</a>
+<a class="sourceLine" id="cb19-20" title="20">        subprocess.check_call(shlex.split(command))</a>
+<a class="sourceLine" id="cb19-21" title="21">    <span class="cf">except</span> subprocess.CalledProcessError:</a>
+<a class="sourceLine" id="cb19-22" title="22">        <span class="cf">if</span> <span class="kw">not</span> can_fail:</a>
+<a class="sourceLine" id="cb19-23" title="23">            <span class="cf">raise</span></a>
+<a class="sourceLine" id="cb19-24" title="24"></a>
+<a class="sourceLine" id="cb19-25" title="25"></a>
+<a class="sourceLine" id="cb19-26" title="26"><span class="kw">def</span> local_pip(name, can_fail<span class="op">=</span><span class="va">False</span>):</a>
+<a class="sourceLine" id="cb19-27" title="27">    <span class="co"># The user make the package to end in the volume</span></a>
+<a class="sourceLine" id="cb19-28" title="28">    <span class="cf">return</span> run(<span class="ss">f&quot;pip install --user </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">&quot;</span>, can_fail<span class="op">=</span>can_fail)</a>
+<a class="sourceLine" id="cb19-29" title="29"></a>
+<a class="sourceLine" id="cb19-30" title="30"></a>
+<a class="sourceLine" id="cb19-31" title="31"><span class="kw">def</span> check_install(name):</a>
+<a class="sourceLine" id="cb19-32" title="32">    <span class="cf">try</span>:</a>
+<a class="sourceLine" id="cb19-33" title="33">        <span class="bu">__import__</span>(name)</a>
+<a class="sourceLine" id="cb19-34" title="34">    <span class="cf">except</span> <span class="pp">ImportError</span>:</a>
+<a class="sourceLine" id="cb19-35" title="35">        local_pip(name)</a>
+<a class="sourceLine" id="cb19-36" title="36"></a>
+<a class="sourceLine" id="cb19-37" title="37">os.environ[<span class="st">&quot;PATH&quot;</span>] <span class="op">=</span> <span class="st">&quot;</span><span class="sc">{HOME}</span><span class="st">/.local/bin:</span><span class="sc">{PATH}</span><span class="st">&quot;</span>.<span class="bu">format</span>(<span class="op">**</span>os.environ)</a>
+<a class="sourceLine" id="cb19-38" title="38">os.environ[<span class="st">&quot;PYTHONPATH&quot;</span>] <span class="op">=</span> (</a>
+<a class="sourceLine" id="cb19-39" title="39">    <span class="st">&quot;</span><span class="sc">{HOME}</span><span class="st">/.local/lib/python3.6/site-packages/:&quot;</span></a>
+<a class="sourceLine" id="cb19-40" title="40">    <span class="co"># Allow to import the testing utilities from jupyter</span></a>
+<a class="sourceLine" id="cb19-41" title="41">    <span class="st">&quot;/code/src/tests&quot;</span></a>
+<a class="sourceLine" id="cb19-42" title="42">).<span class="bu">format</span>(</a>
+<a class="sourceLine" id="cb19-43" title="43">    <span class="op">**</span>os.environ</a>
+<a class="sourceLine" id="cb19-44" title="44">)</a>
+<a class="sourceLine" id="cb19-45" title="45"></a>
+<a class="sourceLine" id="cb19-46" title="46">run(<span class="st">&quot;jupyter nbextension enable --py widgetsnbextension&quot;</span>)</a>
+<a class="sourceLine" id="cb19-47" title="47">run(<span class="st">&quot;jupyter serverextension enable --py jupyterlab&quot;</span>)</a>
+<a class="sourceLine" id="cb19-48" title="48"></a>
+<a class="sourceLine" id="cb19-49" title="49">os.execvp(CMD[<span class="dv">0</span>], CMD)</a></code></pre></div>
+</section>
+<section class="slide level1">
+
+<h2 id="the-end">The end</h2>
+</section>
+<section class="slide level1">
+
+<h2 id="questions">Questions?</h2>
+</section>
+    </div>
+  </div>
+
+  <script src="https://revealjs.com/lib/js/head.min.js"></script>
+  <script src="https://revealjs.com/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Push each slide change to the browser history
+        history: true,
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'https://revealjs.com/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'https://revealjs.com/plugin/zoom-js/zoom.js', async: true },
+          { src: 'https://revealjs.com/plugin/notes/notes.js', async: true }
+        ]
+      });
+    </script>
+    </body>
+</html>

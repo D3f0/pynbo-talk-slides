@@ -4,7 +4,7 @@ INPUT := $(shell ls slide*.md | head -n1)
 OUTPUT := $(INPUT:.md=.html)
 REVEAL_JS_URL := https://revealjs.com
 
-THEME ?= league
+THEME ?= white
 
 # beige
 # black
@@ -33,3 +33,6 @@ open: slides
 
 watch:
 	watchmedo shell-command -p '*.md;Makefile' -c 'make slides'
+
+ssh:
+	cd dockvm; vagrant ssh

@@ -13,6 +13,13 @@ Structure project for docker.
 
 ----
 
+## Further reading
+
+I wrote an more  in-depth article at my company's website:
+[https://engineering.spideroak.com/single-dockerfile-across-environments/](https://engineering.spideroak.com/single-dockerfile-across-environments/)
+
+----
+
 # Virtualization Basics
 
 - Virtual Machines
@@ -303,4 +310,295 @@ Wait, weren't we **`uid=0`**? 🔥
 
 ----
 
-# Network
+## Network
+
+----
+
+- Each container runs by default in the Docker bridge.
+- Unless we connect them at creation time (`run` or `create`)
+  with a network.
+
+```bash
+docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+84422e48e242        bridge              bridge              local
+fbca96234ec6        host                host                local
+f6effdb82553        none                null                local
+```
+
+----
+
+![Basic Container Networking](./imgs/dockr-net.png)
+
+----
+
+# Image Creation
+
+-----
+
+- In order to create images we need to write a `Dockerfile`
+- Run `docker build -t <tag> context dir` (context dir is usually the current
+directory or `.`)
+- If we tag images with repository URLS, then we'll be able to push them.
+
+
+----
+
+```
+FROM python:3.7-slim
+ENV USER=user UID=1000
+
+LABEL maintainer=me@mycompany.com
+
+RUN groupadd -g ${UID} -r ${USER} \
+    && useradd -u ${UID} -r -g ${USER} ${USER}
+COPY requirements.txt /setup/requirements.txt
+RUN pip install /setup/requirements.txt
+COPY . /code
+WORKDIR /code
+USER ${USER}
+VOLUME /some_storage
+EXPOSE 8000
+RUN python myapp.py
+```
+
+----
+
+- Use reputed images from Registry in the **FROM**
+  - If not, check Dockerfile to be minimal
+    - and be automated
+    - or at least official (run `docker search term`)
+  - Or purchase Docker EE whose registry
+- Resist temptation to use `VOLUME` for the code (at least
+  until we learn about compose 😅)
+- Use small as possible images
+
+
+----
+
+#### Building binary packages 🔨
+
+```
+FROM python:3.6-slim AS python-builder
+RUN pip install -U pip
+# Overwrite symlink contents
+COPY /requirements-bin.txt
+RUN mkdir /wheels
+RUN cd /wheels && pip wheel -r /requirements-bin.txt
+
+# Final image
+FROM python:3.6-slim
+# ...
+RUN adduser --disabled-password --gecos "" ${USER} && \
+    chown -R ${USER} /home/${USER}
+COPY --from=python-builder /wheels/dist/ /wheels
+RUN cd /wheels && pip install *.whl
+
+```
+
+----
+
+- Don't use root for runtime, create a user.
+- Separate layers that produce big and rare changes
+  like `pip install` to the top. Help the caché invalidation.
+- Install requirements as root
+  - and then demote yourself to your `USER`.
+
+----
+
+- If dynamic startup is needed, add an `ENTRYPOINT`
+- You can write it in Python if you want.
+- This can make the *image* part *production rady™* and
+  augment your image for development.
+
+----
+
+# Docker Projects
+
+----
+
+- Rarely our application just relies in Python, we probably
+  need DBs, IoT brokers, authentication providers, etc.
+- Some development tasks are hard to accomplish from the
+  `docker run` itself.
+- Docker compose allows us to define:
+
+  - services
+  - networks
+  - volumes
+
+----
+
+```yaml
+services:
+
+  myapp:
+    build: ./webapp
+    ports:
+      - 8080:80
+    environment:
+      DB_HOST: postgresql
+    volumes:
+      - /webapp/code:/code
+    restart: unless-stopped
+
+  postgresql:
+    image: postgresql:10
+```
+
+
+----
+
+To bring up our project like this
+
+```bash
+$ docker-compose up
+```
+
+Typical flags are `docker up --build -d` and eventually `docker-compose logs`.
+
+----
+
+#### Runtime augmentation
+
+- Put development requirements in volumes:
+  - Define `PYTHONPATH` in `docker-compose.yml`'s `environment`
+  - We can take advantage of `/home/user/.local` and run `pip install --user`.
+- Create an entrypoint and check different behaviors based on
+  environment.
+- You can defined a custom entrypoint in your compose file, so
+  your image is always production ready.
+
+----
+
+```bash
+#!/bin/bash
+set -e
+cmd="$@"
+
+if [ "${ENV:dev}" != "prod" ]; then
+    # Custom environment setup
+    if [ -z "${SKIP_SETUP}" -a -d "/shared/${ENV}" ]; then
+        for f in /shared/${ENV}/*; do
+            case "$f" in
+            *.sh)     echo "$0: running $f"; . "$f" ;;
+            *.py)     echo "$0: running $f"; python "$f"; echo ;;
+            *)        echo "$0: ignoring $f" ;;
+            esac
+            echo "Finished ${ENV} setup. Running $cmd"
+        done
+    fi
+fi
+
+# Django specific
+if [ -z "${SKIP_COLLECTSTATIC}" ]; then
+    echo "Running collect static"
+    python manage.py collectstatic --noinput
+fi
+
+exec $cmd
+```
+
+This is bash, but could easily be achieved with Python.
+
+----
+
+## Development sidecars
+
+- You can put a separate `docker-compose.yml` and
+  and call compose like:
+
+  ```
+  docker-compose.yml -f docker-compose.yml -f dev.yml
+  ```
+
+----
+
+#### `dev.yml`
+
+```yaml
+version: '3.5'
+services:
+  jupyter:
+    image: my_other_image
+    user: root  # 😱
+    ports:
+      - 8889:8888
+    volumes:
+      - .:/code
+      - local_cache:/root/.local
+    working_dir: /code
+    command: python /code/dev_entrypoint.py
+    labels:
+      - "not.for.prod"
+      - "comment=🇰🇪"
+volumes:
+  local_cache:
+
+```
+
+----
+
+#### A sketchy 🐍 entrypoint
+
+```python
+#!/usr/bin/env python
+import sys
+import os
+import subprocess
+import shlex
+from pathlib import Path
+
+
+CMD = sys.argv[1:]
+
+if not CMD:
+    CMD = shlex.split(
+        "jupyter lab --ip='0.0.0.0' --port=8888 --no-browser --notebook-dir=/code "
+        "--allow-root --NotebookApp.token='' --NotebookApp.allow_remote_access=True"
+    )
+
+
+def run(command, can_fail=False):
+    try:
+        subprocess.check_call(shlex.split(command))
+    except subprocess.CalledProcessError:
+        if not can_fail:
+            raise
+
+
+def local_pip(name, can_fail=False):
+    # The user make the package to end in the volume
+    return run(f"pip install --user {name}", can_fail=can_fail)
+
+
+def check_install(name):
+    try:
+        __import__(name)
+    except ImportError:
+        local_pip(name)
+
+os.environ["PATH"] = "{HOME}/.local/bin:{PATH}".format(**os.environ)
+os.environ["PYTHONPATH"] = (
+    "{HOME}/.local/lib/python3.6/site-packages/:"
+    # Allow to import the testing utilities from jupyter
+    "/code/src/tests"
+).format(
+    **os.environ
+)
+
+run("jupyter nbextension enable --py widgetsnbextension")
+run("jupyter serverextension enable --py jupyterlab")
+
+os.execvp(CMD[0], CMD)
+
+```
+
+
+----
+
+## The end
+
+---
+
+## Questions?
