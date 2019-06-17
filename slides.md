@@ -438,8 +438,10 @@ services:
       - 8080:80
     environment:
       DB_HOST: postgresql
+      PYTHONPATH: /home/user/.local/lib/python3.7/site-packages/
     volumes:
       - /webapp/code:/code
+      - local_dev_pkgs:/home/user/.local/lib/python3.7/site-packages/
     restart: unless-stopped
 
   postgresql:

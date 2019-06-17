@@ -518,12 +518,14 @@ RUN cd /wheels &amp;&amp; pip install *.whl
 <a class="sourceLine" id="cb14-6" title="6">      <span class="kw">-</span> 8080:80</a>
 <a class="sourceLine" id="cb14-7" title="7">    <span class="fu">environment:</span></a>
 <a class="sourceLine" id="cb14-8" title="8">      <span class="fu">DB_HOST:</span><span class="at"> postgresql</span></a>
-<a class="sourceLine" id="cb14-9" title="9">    <span class="fu">volumes:</span></a>
-<a class="sourceLine" id="cb14-10" title="10">      <span class="kw">-</span> /webapp/code:/code</a>
-<a class="sourceLine" id="cb14-11" title="11">    <span class="fu">restart:</span><span class="at"> unless-stopped</span></a>
-<a class="sourceLine" id="cb14-12" title="12"></a>
-<a class="sourceLine" id="cb14-13" title="13">  <span class="fu">postgresql:</span></a>
-<a class="sourceLine" id="cb14-14" title="14">    <span class="fu">image:</span><span class="at"> postgresql:10</span></a></code></pre></div>
+<a class="sourceLine" id="cb14-9" title="9">      <span class="fu">PYTHONPATH:</span><span class="at"> /home/user/.local/lib/python3.7/site-packages/</span></a>
+<a class="sourceLine" id="cb14-10" title="10">    <span class="fu">volumes:</span></a>
+<a class="sourceLine" id="cb14-11" title="11">      <span class="kw">-</span> /webapp/code:/code</a>
+<a class="sourceLine" id="cb14-12" title="12">      <span class="kw">-</span> local_dev_pkgs:/home/user/.local/lib/python3.7/site-packages/</a>
+<a class="sourceLine" id="cb14-13" title="13">    <span class="fu">restart:</span><span class="at"> unless-stopped</span></a>
+<a class="sourceLine" id="cb14-14" title="14"></a>
+<a class="sourceLine" id="cb14-15" title="15">  <span class="fu">postgresql:</span></a>
+<a class="sourceLine" id="cb14-16" title="16">    <span class="fu">image:</span><span class="at"> postgresql:10</span></a></code></pre></div>
 </section>
 <section class="slide level1">
 
